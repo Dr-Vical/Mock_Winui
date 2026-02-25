@@ -140,14 +140,7 @@ public partial class MainViewModel : ObservableObject
     // ═══════════════════════════════════════════════════════
     public void TogglePanel(string panelId)
     {
-        bool current = panelId switch
-        {
-            "A" => IsPanelAVisible,
-            "B" => IsPanelBVisible,
-            "C" => IsPanelCVisible,
-            "D" => IsPanelDVisible,
-            _ => false
-        };
+        bool current = IsPanelVisible(panelId);
 
         // 끄려는 경우: 최소 1개 보장
         if (current && VisiblePanelCount() <= 1) return;
@@ -160,13 +153,26 @@ public partial class MainViewModel : ObservableObject
             case "D": IsPanelDVisible = !current; break;
         }
 
-        // 새로 켜진 패널에 데이터가 없으면 현재 노드 로드
-        if (!current && string.IsNullOrEmpty(GetPanelNodeName(panelId)))
-            LoadParametersForPanel(panelId, SelectedNodeName);
-
-        // 활성 패널을 새로 켜진 패널로 변경
         if (!current)
+        {
+            // 새로 켜진 패널에 데이터가 없으면 현재 노드 로드
+            if (string.IsNullOrEmpty(GetPanelNodeName(panelId)))
+                LoadParametersForPanel(panelId, SelectedNodeName);
+
             ActivePanel = panelId;
+        }
+        else
+        {
+            // 닫힌 패널이 활성 패널이었으면 남은 패널 중 첫 번째로 전환
+            if (ActivePanel == panelId)
+            {
+                string[] all = { "A", "B", "C", "D" };
+                foreach (var p in all)
+                {
+                    if (IsPanelVisible(p)) { ActivePanel = p; break; }
+                }
+            }
+        }
 
         PanelLayoutChanged?.Invoke();
     }

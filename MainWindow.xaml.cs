@@ -292,23 +292,7 @@ public sealed partial class MainWindow : Window
     {
         if (sender is not Button clicked || clicked.Tag is not string tag) return;
 
-        // 이미 보이는 패널을 클릭하면: 활성 패널 전환 (단, 1개뿐이면 토글하지 않음)
-        if (ViewModel.IsPanelVisible(tag))
-        {
-            if (ViewModel.VisiblePanelCount() > 1 && ViewModel.ActivePanel == tag)
-            {
-                // 활성 패널 클릭 → 닫기
-                ViewModel.TogglePanel(tag);
-            }
-            else
-            {
-                // 비활성이지만 보이는 패널 클릭 → 활성 전환
-                ViewModel.ActivePanel = tag;
-            }
-            return;
-        }
-
-        // 보이지 않는 패널 클릭 → 열기
+        // 단순 토글: 보이면 닫고, 안 보이면 열기
         ViewModel.TogglePanel(tag);
     }
 
