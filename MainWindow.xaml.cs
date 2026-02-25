@@ -59,15 +59,10 @@ public sealed partial class MainWindow : Window
     {
         if (!DesktopAcrylicController.IsSupported()) return;
 
-        _backdropConfig = new SystemBackdropConfiguration();
-
-        // 테마 변경 추적
-        this.Activated += (s, args) =>
+        _backdropConfig = new SystemBackdropConfiguration
         {
-            if (_backdropConfig != null)
-            {
-                _backdropConfig.IsInputActive = args.WindowActivationState != WindowActivationState.Deactivated;
-            }
+            // 항상 활성 상태로 유지 → 비활성화 시에도 투명 효과 유지
+            IsInputActive = true
         };
 
         ((FrameworkElement)this.Content).ActualThemeChanged += (s, _) =>
