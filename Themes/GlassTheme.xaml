@@ -94,6 +94,20 @@
     <x:Double x:Key="IconLG">24</x:Double>
     <x:Double x:Key="IconXL">32</x:Double>
 
+    <!-- ══════════════════════════════════════════════════ -->
+    <!--  LIST / TREE SELECTION OVERRIDES                   -->
+    <!-- ══════════════════════════════════════════════════ -->
+    <SolidColorBrush x:Key="TreeViewItemBackgroundSelected" Color="#4060A5FA" />
+    <SolidColorBrush x:Key="TreeViewItemBackgroundSelectedPointerOver" Color="#5060A5FA" />
+    <SolidColorBrush x:Key="TreeViewItemBackgroundSelectedPressed" Color="#6060A5FA" />
+    <SolidColorBrush x:Key="TreeViewItemForegroundSelected" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="TreeViewItemForegroundSelectedPointerOver" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="TreeViewItemForegroundSelectedPressed" Color="#FFFFFFFF" />
+
+    <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#4060A5FA" />
+    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#5060A5FA" />
+    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#6060A5FA" />
+
     <!-- Panel Toggle Button Accents (A/B/C/D) -->
     <SolidColorBrush x:Key="PanelAAccent" Color="#FF60A5FA" />
     <SolidColorBrush x:Key="PanelBAccent" Color="#FF34D399" />

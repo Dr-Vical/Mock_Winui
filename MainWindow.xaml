@@ -16,7 +16,7 @@
         </Grid.RowDefinitions>
 
         <!-- 투명도 오버레이: 슬라이더로 Opacity(0~0.92)를 제어, 모든 Row를 덮음 -->
-        <Grid x:Name="OpacityOverlay" Background="#0A0A12" Opacity="0.15"
+        <Grid x:Name="OpacityOverlay" Background="#0A0A12" Opacity="0.736"
               IsHitTestVisible="False" Grid.RowSpan="5" Canvas.ZIndex="-1" />
 
         <!-- ═══════════ TITLE BAR ═══════════ -->
@@ -116,12 +116,12 @@
                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                               VerticalAlignment="Center" />
                     <Slider x:Name="OpacitySlider" Width="120"
-                            Minimum="0" Maximum="100" Value="15"
+                            Minimum="0" Maximum="100" Value="80"
                             StepFrequency="1"
                             VerticalAlignment="Center"
                             ValueChanged="OnOpacitySliderChanged"
                             ToolTipService.ToolTip="Window Opacity" />
-                    <TextBlock x:Name="OpacityLabel" Text="15%"
+                    <TextBlock x:Name="OpacityLabel" Text="80%"
                                FontSize="11" Width="32"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                VerticalAlignment="Center" />
