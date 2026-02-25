@@ -204,7 +204,7 @@
                 </Grid>
             </Border>
 
-            <!-- ══════ CENTER: PARAM + ERROR ══════ -->
+            <!-- ══════ CENTER: DYNAMIC PANELS + ERROR LOG ══════ -->
             <Grid Grid.Column="1" Margin="4,0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
@@ -212,132 +212,8 @@
                     <RowDefinition Height="170" />
                 </Grid.RowDefinitions>
 
-                <!-- Parameter Editor -->
-                <Border Grid.Row="0" Background="{StaticResource GlassBrush}"
-                        BorderBrush="{StaticResource GlassBorderBrush}"
-                        BorderThickness="1" CornerRadius="8">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <!-- Selected Node + Panel Label -->
-                        <Grid Grid.Row="0" Padding="14,8"
-                              BorderBrush="{StaticResource DividerBrush}" BorderThickness="0,0,0,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock x:Name="PanelLabel"
-                                       Text="{x:Bind ViewModel.ActivePanel, Mode=OneWay}"
-                                       FontSize="12" FontWeight="SemiBold"
-                                       Foreground="{StaticResource AccentBrush}" />
-                            <TextBlock Grid.Column="1"
-                                       Text="{x:Bind ViewModel.SelectedNodeName, Mode=OneWay}"
-                                       FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                       Margin="12,0,0,0" />
-                        </Grid>
-
-                        <!-- Column Headers -->
-                        <Grid Grid.Row="1" Background="{StaticResource GridHeaderBrush}" Height="32">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="90" />
-                                <ColumnDefinition Width="*" MinWidth="160" />
-                                <ColumnDefinition Width="80" />
-                                <ColumnDefinition Width="90" />
-                                <ColumnDefinition Width="70" />
-                                <ColumnDefinition Width="110" />
-                                <ColumnDefinition Width="110" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="FT NUM" Style="{StaticResource CaptionTextBlockStyle}"
-                                       Padding="12,0" VerticalAlignment="Center" FontWeight="SemiBold" />
-                            <TextBlock Grid.Column="1" Text="PARAMETER" Style="{StaticResource CaptionTextBlockStyle}"
-                                       Padding="12,0" VerticalAlignment="Center" FontWeight="SemiBold" />
-                            <TextBlock Grid.Column="2" Text="VALUE" Style="{StaticResource CaptionTextBlockStyle}"
-                                       Padding="12,0" VerticalAlignment="Center" FontWeight="SemiBold" />
-                            <TextBlock Grid.Column="3" Text="UNITS" Style="{StaticResource CaptionTextBlockStyle}"
-                                       Padding="12,0" VerticalAlignment="Center" FontWeight="SemiBold" />
-                            <TextBlock Grid.Column="4" Text="DEFAULT" Style="{StaticResource CaptionTextBlockStyle}"
-                                       Padding="12,0" VerticalAlignment="Center" FontWeight="SemiBold" />
-                            <TextBlock Grid.Column="5" Text="MIN" Style="{StaticResource CaptionTextBlockStyle}"
-                                       Padding="12,0" VerticalAlignment="Center" FontWeight="SemiBold" />
-                            <TextBlock Grid.Column="6" Text="MAX" Style="{StaticResource CaptionTextBlockStyle}"
-                                       Padding="12,0" VerticalAlignment="Center" FontWeight="SemiBold" />
-                        </Grid>
-
-                        <!-- Data Rows -->
-                        <ListView Grid.Row="2" x:Name="ParameterListView"
-                                  ItemsSource="{x:Bind ViewModel.Parameters, Mode=OneWay}"
-                                  SelectionMode="Single" Background="Transparent">
-                            <ListView.ItemContainerStyle>
-                                <Style TargetType="ListViewItem">
-                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                    <Setter Property="Padding" Value="0" />
-                                    <Setter Property="MinHeight" Value="30" />
-                                </Style>
-                            </ListView.ItemContainerStyle>
-                            <ListView.ItemTemplate>
-                                <DataTemplate x:DataType="models:ParameterItem">
-                                    <Grid Height="30" BorderBrush="{StaticResource DividerBrush}"
-                                          BorderThickness="0,0,0,1">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="90" />
-                                            <ColumnDefinition Width="*" MinWidth="160" />
-                                            <ColumnDefinition Width="80" />
-                                            <ColumnDefinition Width="90" />
-                                            <ColumnDefinition Width="70" />
-                                            <ColumnDefinition Width="110" />
-                                            <ColumnDefinition Width="110" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="{x:Bind FtNumber}" Padding="12,0"
-                                                   VerticalAlignment="Center" FontSize="12"
-                                                   FontFamily="Cascadia Code, Consolas" />
-                                        <TextBlock Grid.Column="1" Text="{x:Bind Name}" Padding="12,0"
-                                                   VerticalAlignment="Center" FontSize="12"
-                                                   FontFamily="Cascadia Code, Consolas" />
-                                        <TextBlock Grid.Column="2" Text="{x:Bind Value}" Padding="12,0"
-                                                   VerticalAlignment="Center" FontSize="12"
-                                                   FontWeight="SemiBold" FontFamily="Cascadia Code, Consolas"
-                                                   Foreground="{StaticResource AccentBrush}" />
-                                        <TextBlock Grid.Column="3" Text="{x:Bind Unit}" Padding="12,0"
-                                                   VerticalAlignment="Center" FontSize="12"
-                                                   FontFamily="Cascadia Code, Consolas"
-                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                        <TextBlock Grid.Column="4" Text="{x:Bind Default}" Padding="12,0"
-                                                   VerticalAlignment="Center" FontSize="12"
-                                                   FontFamily="Cascadia Code, Consolas"
-                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                        <TextBlock Grid.Column="5" Text="{x:Bind Min}" Padding="12,0"
-                                                   VerticalAlignment="Center" FontSize="12"
-                                                   FontFamily="Cascadia Code, Consolas"
-                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                        <TextBlock Grid.Column="6" Text="{x:Bind Max}" Padding="12,0"
-                                                   VerticalAlignment="Center" FontSize="12"
-                                                   FontFamily="Cascadia Code, Consolas"
-                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-
-                        <!-- Filter Bar -->
-                        <Border Grid.Row="3" Background="{StaticResource GlassLowBrush}"
-                                BorderBrush="{StaticResource DividerBrush}" BorderThickness="0,1,0,0"
-                                Padding="12,6" CornerRadius="0,0,8,8">
-                            <StackPanel Orientation="Horizontal" Spacing="20">
-                                <CheckBox Content="Show Helps" FontSize="12"
-                                          IsChecked="{x:Bind ViewModel.ShowHelps, Mode=TwoWay}" />
-                                <CheckBox Content="Show Status" FontSize="12"
-                                          IsChecked="{x:Bind ViewModel.ShowStatus, Mode=TwoWay}" />
-                                <CheckBox Content="Show Commands" FontSize="12"
-                                          IsChecked="{x:Bind ViewModel.ShowCommands, Mode=TwoWay}" />
-                            </StackPanel>
-                        </Border>
-                    </Grid>
-                </Border>
+                <!-- 동적 패널 그리드 (A/B/C/D 분할 표시) -->
+                <Grid x:Name="CenterPanelGrid" Grid.Row="0" />
 
                 <!-- Error Log -->
                 <Border Grid.Row="2" Background="{StaticResource GlassBrush}"

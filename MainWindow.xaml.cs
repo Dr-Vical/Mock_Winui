@@ -6,9 +6,11 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
+using RswareDesign.Controls;
 using RswareDesign.ViewModels;
 using System;
-using System.Runtime.InteropServices;
+using System.Collections.Generic;
+using System.Linq;
 using WinRT;
 using WinRT.Interop;
 
@@ -21,6 +23,10 @@ public sealed partial class MainWindow : Window
     private DesktopAcrylicController? _acrylicController;
     private SystemBackdropConfiguration? _backdropConfig;
 
+    // 패널 관리
+    private readonly Dictionary<string, CompareParameterPanel> _panels = new();
+    private readonly Dictionary<string, SolidColorBrush> _panelAccents = new();
+
     public MainWindow()
     {
         this.InitializeComponent();
@@ -30,12 +36,19 @@ public sealed partial class MainWindow : Window
         SetTitleBar(TitleBarGrid);
         SetWindowSize(1920, 1080);
 
-        // 투명 배경 적용
         TrySetTransparentBackdrop();
 
-        RootGrid.Loaded += (_, _) => RootGrid.RequestedTheme = ElementTheme.Dark;
+        RootGrid.Loaded += (_, _) =>
+        {
+            RootGrid.RequestedTheme = ElementTheme.Dark;
+            InitPanelAccents();
+            RebuildPanelLayout();
+        };
 
         BuildDriveTree();
+
+        ViewModel.PanelLayoutChanged += () =>
+            DispatcherQueue.TryEnqueue(RebuildPanelLayout);
 
         ViewModel.PropertyChanged += (s, e) =>
         {
@@ -51,17 +64,134 @@ public sealed partial class MainWindow : Window
         };
     }
 
-    /// <summary>
-    /// DesktopAcrylicController 직접 설정 — Tint/Luminosity를 0에 가깝게 하여
-    /// 창 뒤의 바탕화면/다른 창이 비치는 투명 효과 구현
-    /// </summary>
+    // ═══════════════════════════════════════════════════════
+    //  패널 액센트 색상 초기화
+    // ═══════════════════════════════════════════════════════
+    private void InitPanelAccents()
+    {
+        _panelAccents["A"] = (SolidColorBrush)Application.Current.Resources["PanelAAccent"];
+        _panelAccents["B"] = (SolidColorBrush)Application.Current.Resources["PanelBAccent"];
+        _panelAccents["C"] = (SolidColorBrush)Application.Current.Resources["PanelCAccent"];
+        _panelAccents["D"] = (SolidColorBrush)Application.Current.Resources["PanelDAccent"];
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  동적 패널 레이아웃 (1개=전체, 2개=50/50, 3~4개=2x2)
+    // ═══════════════════════════════════════════════════════
+    private void RebuildPanelLayout()
+    {
+        CenterPanelGrid.Children.Clear();
+        CenterPanelGrid.RowDefinitions.Clear();
+        CenterPanelGrid.ColumnDefinitions.Clear();
+
+        string[] allPanels = { "A", "B", "C", "D" };
+        var visible = allPanels.Where(p => ViewModel.IsPanelVisible(p)).ToList();
+
+        // 보이지 않는 패널 제거
+        foreach (var key in _panels.Keys.Where(k => !visible.Contains(k)).ToList())
+            _panels.Remove(key);
+
+        // 패널 생성/업데이트
+        foreach (var id in visible)
+        {
+            if (!_panels.ContainsKey(id))
+            {
+                var panel = new CompareParameterPanel();
+                panel.Configure(id, $"Panel {id}", _panelAccents[id],
+                    ViewModel.GetPanelParameters(id), ViewModel.GetPanelNodeName(id));
+                panel.CloseRequested += (_, panelId) => ViewModel.TogglePanel(panelId);
+                _panels[id] = panel;
+            }
+            else
+            {
+                _panels[id].UpdateNodeName(ViewModel.GetPanelNodeName(id));
+            }
+        }
+
+        // 그리드 레이아웃 구성
+        int count = visible.Count;
+        if (count == 1)
+        {
+            CenterPanelGrid.Children.Add(_panels[visible[0]]);
+        }
+        else if (count == 2)
+        {
+            CenterPanelGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            CenterPanelGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            var p0 = _panels[visible[0]];
+            p0.Margin = new Thickness(0, 0, 2, 0);
+            Grid.SetColumn(p0, 0);
+            CenterPanelGrid.Children.Add(p0);
+
+            var p1 = _panels[visible[1]];
+            p1.Margin = new Thickness(2, 0, 0, 0);
+            Grid.SetColumn(p1, 1);
+            CenterPanelGrid.Children.Add(p1);
+        }
+        else // 3 or 4
+        {
+            CenterPanelGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            CenterPanelGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            CenterPanelGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            CenterPanelGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            int[] cols = { 0, 1, 0, 1 };
+            int[] rows = { 0, 0, 1, 1 };
+            Thickness[] margins =
+            {
+                new(0, 0, 2, 2), new(2, 0, 0, 2),
+                new(0, 2, 2, 0), new(2, 2, 0, 0)
+            };
+
+            for (int i = 0; i < visible.Count; i++)
+            {
+                var p = _panels[visible[i]];
+                p.Margin = margins[i];
+                Grid.SetColumn(p, cols[i]);
+                Grid.SetRow(p, rows[i]);
+                CenterPanelGrid.Children.Add(p);
+            }
+        }
+
+        // A/B/C/D 버튼 비주얼 업데이트
+        UpdatePanelButtons();
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  A/B/C/D 버튼 토글 비주얼
+    // ═══════════════════════════════════════════════════════
+    private void UpdatePanelButtons()
+    {
+        Button[] tabs = { PanelABtn, PanelBBtn, PanelCBtn, PanelDBtn };
+        string[] ids = { "A", "B", "C", "D" };
+
+        for (int i = 0; i < tabs.Length; i++)
+        {
+            if (ViewModel.IsPanelVisible(ids[i]))
+            {
+                tabs[i].Background = _panelAccents.GetValueOrDefault(ids[i],
+                    new SolidColorBrush(Colors.Gray));
+                tabs[i].Foreground = new SolidColorBrush(Colors.White);
+            }
+            else
+            {
+                tabs[i].Background = new SolidColorBrush(Colors.Transparent);
+                tabs[i].Foreground = new SolidColorBrush(
+                    Microsoft.UI.ColorHelper.FromArgb(0x99, 0xFF, 0xFF, 0xFF));
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  Backdrop
+    // ═══════════════════════════════════════════════════════
     private void TrySetTransparentBackdrop()
     {
         if (!DesktopAcrylicController.IsSupported()) return;
 
         _backdropConfig = new SystemBackdropConfiguration
         {
-            // 항상 활성 상태로 유지 → 비활성화 시에도 투명 효과 유지
             IsInputActive = true
         };
 
@@ -78,10 +208,9 @@ public sealed partial class MainWindow : Window
 
         _acrylicController = new DesktopAcrylicController
         {
-            // 핵심: Tint와 Luminosity를 극도로 낮춰 투명하게
-            TintColor = Windows.UI.Color.FromArgb(255, 10, 10, 18),  // 아주 약한 다크 틴트
-            TintOpacity = 0.15f,      // 틴트 불투명도 (0 = 완전투명, 1 = 불투명)
-            LuminosityOpacity = 0.0f, // 밝기 불투명도 (0 = 뒤가 완전히 보임)
+            TintColor = Windows.UI.Color.FromArgb(255, 10, 10, 18),
+            TintOpacity = 0.15f,
+            LuminosityOpacity = 0.0f,
             FallbackColor = Windows.UI.Color.FromArgb(40, 10, 10, 18)
         };
 
@@ -143,44 +272,44 @@ public sealed partial class MainWindow : Window
     }
 
     // ═══════════════════════════════════════════════════════
-    //  Tree 선택
+    //  Tree 선택 → 활성 패널에 로드
     // ═══════════════════════════════════════════════════════
     private void OnTreeItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args)
     {
         if (args.InvokedItem is TreeViewNode node && node.Content is string name)
+        {
             ViewModel.SelectNode(name);
+            // 활성 패널의 노드명 업데이트
+            if (_panels.TryGetValue(ViewModel.ActivePanel, out var panel))
+                panel.UpdateNodeName(name);
+        }
     }
 
     // ═══════════════════════════════════════════════════════
-    //  A/B/C/D 패널 탭
+    //  A/B/C/D 패널 토글
     // ═══════════════════════════════════════════════════════
     private void OnPanelTabClick(object sender, RoutedEventArgs e)
     {
         if (sender is not Button clicked || clicked.Tag is not string tag) return;
 
-        Button[] tabs = { PanelABtn, PanelBBtn, PanelCBtn, PanelDBtn };
-        SolidColorBrush[] accents =
+        // 이미 보이는 패널을 클릭하면: 활성 패널 전환 (단, 1개뿐이면 토글하지 않음)
+        if (ViewModel.IsPanelVisible(tag))
         {
-            (SolidColorBrush)Application.Current.Resources["PanelAAccent"],
-            (SolidColorBrush)Application.Current.Resources["PanelBAccent"],
-            (SolidColorBrush)Application.Current.Resources["PanelCAccent"],
-            (SolidColorBrush)Application.Current.Resources["PanelDAccent"]
-        };
-
-        for (int i = 0; i < tabs.Length; i++)
-        {
-            if (tabs[i] == clicked)
+            if (ViewModel.VisiblePanelCount() > 1 && ViewModel.ActivePanel == tag)
             {
-                tabs[i].Background = accents[i];
-                tabs[i].Foreground = new SolidColorBrush(Colors.White);
+                // 활성 패널 클릭 → 닫기
+                ViewModel.TogglePanel(tag);
             }
             else
             {
-                tabs[i].Background = new SolidColorBrush(Colors.Transparent);
-                tabs[i].Foreground = (SolidColorBrush)Application.Current.Resources["TextSecondary"];
+                // 비활성이지만 보이는 패널 클릭 → 활성 전환
+                ViewModel.ActivePanel = tag;
             }
+            return;
         }
-        ViewModel.ActivePanel = tag;
+
+        // 보이지 않는 패널 클릭 → 열기
+        ViewModel.TogglePanel(tag);
     }
 
     // ═══════════════════════════════════════════════════════
@@ -201,7 +330,7 @@ public sealed partial class MainWindow : Window
     private void OnRevertClick(object sender, RoutedEventArgs e) => ViewModel.RevertParamsCommand.Execute(null);
 
     // ═══════════════════════════════════════════════════════
-    //  Menu: Theme — 투명도 유지하면서 테마 전환
+    //  Theme
     // ═══════════════════════════════════════════════════════
     private void OnThemeClick(object sender, RoutedEventArgs e)
     {
@@ -215,7 +344,6 @@ public sealed partial class MainWindow : Window
         };
         RootGrid.RequestedTheme = theme;
 
-        // 테마에 맞춰 투명 틴트 색상 조정
         if (_acrylicController != null)
         {
             _acrylicController.TintColor = theme == ElementTheme.Light
@@ -225,13 +353,12 @@ public sealed partial class MainWindow : Window
     }
 
     // ═══════════════════════════════════════════════════════
-    //  투명도 슬라이더 — OpacityOverlay.Opacity 제어 (즉시 반영, 부드러운 그라데이션)
-    //  0% = 완전 투명 (배경 비침), 100% = 불투명 (어두운 창)
+    //  투명도 슬라이더
     // ═══════════════════════════════════════════════════════
     private void OnOpacitySliderChanged(object sender, RangeBaseValueChangedEventArgs e)
     {
         if (OpacityOverlay != null)
-            OpacityOverlay.Opacity = e.NewValue / 100.0 * 0.92;  // 최대 0.92 (완전 검정 방지)
+            OpacityOverlay.Opacity = e.NewValue / 100.0 * 0.92;
         if (OpacityLabel != null)
             OpacityLabel.Text = $"{(int)e.NewValue}%";
     }
